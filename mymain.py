@@ -1,8 +1,6 @@
 from pip import main
 import numpy as np
 import pandas as pd
-
-
 import sklearn
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.impute import SimpleImputer, MissingIndicator
@@ -109,7 +107,7 @@ def preprocess(df):
 
     clear_data = none_transform(clear_data)
 
-    print(f'data shape:{clear_data.shape}')
+    # print(f'data shape:{clear_data.shape}')
 
 
     # collecting the numeric features without considering SalePrice
@@ -118,7 +116,7 @@ def preprocess(df):
     # selecting columns with skew more than 0.5
     skewed_features = clear_data[num_features].apply(lambda x: x.dropna().skew())
     skewed_features = skewed_features[skewed_features > 0.5].index
-    print("\nHighly skewed features: \n\n{}".format(skewed_features.tolist()))
+    # print("\nHighly skewed features: \n\n{}".format(skewed_features.tolist()))
     '''
         ['Lot_Area', 'Mas_Vnr_Area', 
         'BsmtFin_SF_2', 'Bsmt_Unf_SF', 
@@ -138,7 +136,7 @@ def preprocess(df):
     for feature in skewed_features:
         clear_data[feature] = boxcox1p(clear_data[feature], lambda_)
 
-    print(clear_data)
+    # print(clear_data)
     ### Generating features:
     order_feats = ["Exter_Qual", "Exter_Cond", "Heating_QC", "Kitchen_Qual", "Bsmt_Qual", 
                    "Bsmt_Cond", "Fireplace_Qu", "Garage_Qual", "Garage_Cond"]
@@ -180,26 +178,35 @@ def preprocess(df):
     # If the house has Wood Deck
     clear_data['IsWoodDeck'] = clear_data['Wood_Deck_SF'].apply(lambda x: 1 if x > 0 else 0)
 
-    print(clear_data)
+    # print(clear_data)
 
 
     hot_one_features = pd.get_dummies(clear_data).reset_index(drop=True)
-    print(hot_one_features)
+
+    # print(hot_one_features)
+
+    return hot_one_features
+    
+
 
 
 
 
 def preprocess_pipline(df,tag="train"):
     if tag == "train":
-        print(df)
+        # print(df)
 
         
         train_y = df['Sale_Price']
         data_df = df.drop(['Sale_Price'], axis=1)
 
-        preprocess(data_df)
+        re_data = preprocess(data_df)
+
+        return re_data, train_y
     else:
-        preprocess(df)
+        re_data = preprocess(df)
+    
+        return re_data, None
         
 
 if __name__ == '__main__':

@@ -29,7 +29,7 @@ for i in range(num_sets):
     test_file = 'test' + str(i+1) + '.csv'
     test_y_file = 'test_y' + str(i+1) + '.csv'
     np.savetxt(train_file, train_tmp, delimiter=",",fmt='%s',header=','.join(data_top),comments='')
-    np.savetxt(test_file, test_tmp, delimiter=",",fmt='%s',header=','.join(data_top))
+    np.savetxt(test_file, test_tmp, delimiter=",",fmt='%s',header=','.join(data_top),comments='')
     np.savetxt(test_y_file, test_tmp_y, delimiter=",")
     print('%d set saving is done!'%(i+1))
 
