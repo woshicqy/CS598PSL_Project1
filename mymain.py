@@ -5,6 +5,7 @@ import sklearn
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.impute import SimpleImputer, MissingIndicator
 from sklearn.preprocessing import FunctionTransformer, LabelEncoder, Normalizer, StandardScaler, OneHotEncoder
+
 from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin, clone
 
 from sklearn.metrics import accuracy_score
@@ -13,6 +14,9 @@ from scipy import stats
 from sklearn.linear_model import LinearRegression
 from scipy.special import boxcox1p
 import csv
+
+from scipy.stats import norm, skew #for some statistics
+
 
 import matplotlib.pyplot as plt
 
@@ -73,26 +77,121 @@ def none_transform(df):
     return df
 
 
-def preprocess(df):
-    data_df = df.drop(["Street", "Utilities"], axis=1)
-    data_df = data_df.drop("PID", axis=1)
-    
+def preprocess(df,deleteTag=False,tag="train"):
 
-    # clear_data = data_df.drop(data_df[(data_df['Gr_Liv_Area']>4500)].index)
+    # data_df = df.drop(["Street", "Utilities"], axis=1)
+    data_df = df.drop("PID", axis=1)
 
-    clear_data = data_df
-    
+    # print('data shape:',data_df.shape)
+
+    if tag == 'train':
+
+        train_y = data_df["Sale_Price"]
+    else:
+        train_y = None
+
     # plt.figure(figsize=(8, 5))
     # sns.set(font_scale=1.2)
+    # # sns.scatterplot(data_df["Gr_Liv_Area"], train_y)
+
     # sns.scatterplot(data_df["Gr_Liv_Area"], train_y)
     # # plt.vlines(4500, ymax=800000, ymin=0)
 
     # ### find the area value greater than 4500 -> low prices ###
     # plt.title("Gr_Liv_Area vs Sale_Price")
     # plt.show()
+    # exit()
+
+
+    
+    if deleteTag:
+        print('Will Delete Rows')
+        clear_data = data_df.drop(data_df[(data_df['Gr_Liv_Area']>4000) & (data_df['Sale_Price']<300000)].index)
+        # exit()
+    else:
+        clear_data = data_df
+    
 
     # print(data_df)
     # print('clear data shape:',clear_data.shape)
+    # exit()
+
+    ### Analyze the prediction value -> Sale_Price ###
+    # sns.distplot(data_df['Sale_Price'] , fit=norm)
+
+    # # Get the fitted parameters used by the function
+    # (mu, sigma) = norm.fit(data_df['Sale_Price'])
+    # print( '\n mu = {:.2f} and sigma = {:.2f}\n'.format(mu, sigma))
+
+    # #Now plot the distribution
+    # plt.legend(['Normal dist. ($\mu=$ {:.2f} and $\sigma=$ {:.2f} )'.format(mu, sigma)],
+    #             loc='best')
+    # plt.ylabel('Frequency')
+    # plt.title('SalePrice distribution')
+
+    # #Get also the QQ-plot
+    # fig = plt.figure()
+    # res = stats.probplot(data_df['Sale_Price'], plot=plt)
+    # plt.show()
+    # exit()
+
+
+    #We use the numpy fuction log1p which  applies log(1+x) to all elements of the column
+    # data_df["Sale_Price"] = np.log1p(data_df["Sale_Price"])
+
+    # #Check the new distribution 
+    # sns.distplot(data_df['Sale_Price'] , fit=norm);
+
+    # # Get the fitted parameters used by the function
+    # (mu, sigma) = norm.fit(data_df['Sale_Price'])
+    # print( '\n mu = {:.2f} and sigma = {:.2f}\n'.format(mu, sigma))
+
+    # #Now plot the distribution
+    # plt.legend(['Normal dist. ($\mu=$ {:.2f} and $\sigma=$ {:.2f} )'.format(mu, sigma)],
+    #             loc='best')
+    # plt.ylabel('Frequency')
+    # plt.title('SalePrice distribution')
+
+    # #Get also the QQ-plot
+    # fig = plt.figure()
+    # res = stats.probplot(data_df['Sale_Price'], plot=plt)
+    # plt.show()
+    # exit()
+    train_y = clear_data["Sale_Price"]
+    clear_data.drop(['Sale_Price'], axis=1, inplace=True)
+    # print("all_data size is : {}".format(clear_data.shape))
+    # print("all_data size is : {}".format(train_y.shape))
+    # exit()
+
+    all_data_na = (clear_data.isnull().sum() / len(clear_data)) * 100
+    all_data_na = all_data_na.drop(all_data_na[all_data_na == 0].index).sort_values(ascending=False)[:30]
+    missing_data = pd.DataFrame({'Missing Ratio' :all_data_na})
+    # print(missing_data.head(20))
+    # exit()
+
+    # f, ax = plt.subplots(figsize=(10, 8))
+    # plt.xticks(rotation='90')
+    # sns.barplot(x=all_data_na.index, y=all_data_na)
+    # plt.xlabel('Features', fontsize=15)
+    # plt.ylabel('Percent of missing values', fontsize=15)
+    # plt.title('Percent missing data by feature', fontsize=15)
+    # plt.show()
+    # exit()
+
+    ### Data correlation ###
+    # corrmat = clear_data.corr()
+    # plt.subplots(figsize=(12,9))
+    # sns.heatmap(corrmat, vmax=0.9, square=True)
+    # plt.show()
+    # exit()
+
+    ### Fill missing values by using median ###
+    clear_data["Garage_Yr_Blt"] = clear_data["Garage_Yr_Blt"].transform(lambda x: x.fillna(x.median()))
+
+    # all_data_na = (clear_data.isnull().sum() / len(clear_data)) * 100
+    # all_data_na = all_data_na.drop(all_data_na[all_data_na == 0].index).sort_values(ascending=False)[:30]
+    # missing_data = pd.DataFrame({'Missing Ratio' :all_data_na})
+    # print(missing_data.head(20))
     # exit()
 
     clear_data['Lot_Frontage'] = clear_data.groupby('Neighborhood')['Lot_Frontage'].transform(lambda x: x.fillna(x.median()))
@@ -141,17 +240,27 @@ def preprocess(df):
 
     # print(clear_data)
     ### Generating features:
-    order_feats = ["Exter_Qual", "Exter_Cond", "Heating_QC", "Kitchen_Qual", "Bsmt_Qual", 
-                   "Bsmt_Cond", "Fireplace_Qu", "Garage_Qual", "Garage_Cond"]
-    original_features_df = clear_data[order_feats + ['Neighborhood']] # we need to save original values for one-hot encoding
-    # print(f'original_features_df:{original_features_df}')
-    # print(f'clear_data:{clear_data}')
+    # order_feats = ["Exter_Qual", "Exter_Cond", "Heating_QC", "Kitchen_Qual", "Bsmt_Qual", 
+    #                "Bsmt_Cond", "Fireplace_Qu", "Garage_Qual", "Garage_Cond"]
+    # original_features_df = clear_data[order_feats + ['Neighborhood']] # we need to save original values for one-hot encoding
+    # # print(f'original_features_df:{original_features_df}')
+    # # print(f'clear_data:{clear_data}')
 
-    cat_columns = clear_data.select_dtypes(['object']).columns
+    # cat_columns = clear_data.select_dtypes(['object']).columns
 
-    clear_data[cat_columns] = clear_data[cat_columns].apply(lambda x: pd.factorize(x)[0])
-
-    # print(clear_data['Second_Flr_SF'])
+    # clear_data[cat_columns] = clear_data[cat_columns].apply(lambda x: pd.factorize(x)[0])
+    print()
+    cols = ('Fireplace_Qu', 'Bsmt_Qual', 'Bsmt_Cond', 'Garage_Qual', 'Garage_Cond', 
+        'Exter_Qual', 'Exter_Cond','Heating_QC', 'Pool_QC', 'Kitchen_Qual', 'BsmtFin_Type_1', 
+        'BsmtFin_Type_2', 'Functional', 'Fence', 'Bsmt_Exposure', 'Garage_Finish', 'Land_Slope',
+        'Lot_Shape', 'Paved_Drive', 'Street', 'Alley', 'Central_Air', 'MS_SubClass', 'Overall_Cond', 
+        'Year_Sold', 'Mo_Sold')
+    # process columns, apply LabelEncoder to categorical features
+    for c in cols:
+        lbl = LabelEncoder() 
+        lbl.fit(list(clear_data[c].values)) 
+        clear_data[c] = lbl.transform(list(clear_data[c].values))
+    # print('Shape all_data: {}'.format(clear_data.shape))
     # exit()
 
 
@@ -188,26 +297,29 @@ def preprocess(df):
 
     # print('features shape:',hot_one_features.shape)
 
-    return hot_one_features
+    return hot_one_features,train_y
     
 
 
 
 
 
-def preprocess_pipline(df,tag="train"):
+def preprocess_pipline(df,deleteTag=False,tag="train"):
     if tag == "train":
         # print(df)
 
         
-        train_y = df['Sale_Price']
-        data_df = df.drop(['Sale_Price'], axis=1)
+        # train_y = df['Sale_Price']
+        # data_df = df.drop(['Sale_Price'], axis=1)
+        data_df = df
 
-        re_data = preprocess(data_df)
+        re_data,train_y = preprocess(data_df,deleteTag,tag)
+
+
 
         return re_data, train_y
     else:
-        re_data = preprocess(df)
+        re_data,train_y = preprocess(df,deleteTag)
     
         return re_data, None
         
@@ -218,7 +330,21 @@ if __name__ == '__main__':
     test_data = pd.read_csv('test1.csv')
     test_y = pd.read_csv('test_y1.csv')
     print('Load data is done!')
-    preprocess_pipline(train_data,"train")
+    re_train,re_y = preprocess_pipline(train_data,deleteTag = True,tag = "train")
+
+    re_test,_ = preprocess_pipline(train_data,deleteTag = True,tag = "test")
+
+    re_train_,re_y_ = preprocess_pipline(train_data,deleteTag = False,tag = "train")
+
+    re_test_,_ = preprocess_pipline(train_data,deleteTag = False,tag = "test")
+
+    print(f're_train:{re_train.shape}')
+    print(f're_y:{re_y.shape}')
+    print(f're_test:{re_test.shape}')
+
+    print(f're_train:{re_train_.shape}')
+    print(f're_y:{re_y_.shape}')
+    print(f're_test:{re_test_.shape}')
 
 
 
