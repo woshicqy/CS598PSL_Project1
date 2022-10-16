@@ -78,7 +78,9 @@ def preprocess(df):
     data_df = data_df.drop("PID", axis=1)
     
 
-    clear_data = data_df.drop(data_df[(data_df['Gr_Liv_Area']>4500)].index)
+    # clear_data = data_df.drop(data_df[(data_df['Gr_Liv_Area']>4500)].index)
+
+    clear_data = data_df
     
     # plt.figure(figsize=(8, 5))
     # sns.set(font_scale=1.2)
@@ -90,7 +92,8 @@ def preprocess(df):
     # plt.show()
 
     # print(data_df)
-    # print(clear_data)
+    # print('clear data shape:',clear_data.shape)
+    # exit()
 
     clear_data['Lot_Frontage'] = clear_data.groupby('Neighborhood')['Lot_Frontage'].transform(lambda x: x.fillna(x.median()))
     num_to_categ_features = ['MS_SubClass', 'Overall_Cond']#, 'YrSold', 'MoSold']
@@ -183,7 +186,7 @@ def preprocess(df):
 
     hot_one_features = pd.get_dummies(clear_data).reset_index(drop=True)
 
-    # print(hot_one_features)
+    # print('features shape:',hot_one_features.shape)
 
     return hot_one_features
     

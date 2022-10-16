@@ -3,9 +3,9 @@ import numpy as np
 import pandas as pd
 
 data = pd.read_csv('Ames_data.csv')
-testID = pd.read_csv('project1_testIDs.dat',sep=' ')
+testID = pd.read_csv('project1_testIDs.dat',sep=' ',header=None)
 data_top = list(data.columns.values)
-# print(f'data top:{data_top}')
+print(f'testID:{testID.shape}')
 # exit()
 
 
@@ -25,11 +25,14 @@ for i in range(num_sets):
     # print(f'train_tmp:{test_tmp}')
 
     # print(f'test_tmp_y:{test_tmp_y.shape}')
+    # print(f'train_tmp:{train_tmp.shape}')
     train_file = 'train' + str(i+1) + '.csv'
     test_file = 'test' + str(i+1) + '.csv'
     test_y_file = 'test_y' + str(i+1) + '.csv'
+    # exit()
     np.savetxt(train_file, train_tmp, delimiter=",",fmt='%s',header=','.join(data_top),comments='')
     np.savetxt(test_file, test_tmp, delimiter=",",fmt='%s',header=','.join(data_top),comments='')
     np.savetxt(test_y_file, test_tmp_y, delimiter=",")
     print('%d set saving is done!'%(i+1))
+    
 
