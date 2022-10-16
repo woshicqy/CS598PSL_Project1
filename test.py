@@ -36,3 +36,4 @@ if __name__ == '__main__':
     processed_testData,_ = preprocess_pipline(test_data,"test")
 
     print(f'processed_testData:{processed_testData.shape}')
+    print(f'test_y:{test_y.shape}')

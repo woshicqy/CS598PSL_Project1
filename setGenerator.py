@@ -32,7 +32,7 @@ for i in range(num_sets):
     # exit()
     np.savetxt(train_file, train_tmp, delimiter=",",fmt='%s',header=','.join(data_top),comments='')
     np.savetxt(test_file, test_tmp, delimiter=",",fmt='%s',header=','.join(data_top),comments='')
-    np.savetxt(test_y_file, test_tmp_y, delimiter=",")
+    np.savetxt(test_y_file, test_tmp_y, delimiter=",",header='Sales_Prices')
     print('%d set saving is done!'%(i+1))
     
 
