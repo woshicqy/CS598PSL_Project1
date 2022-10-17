@@ -111,8 +111,62 @@ def preprocess(df,deleteTag=False,tag="train"):
         # exit()
     else:
         clear_data = data_df
-    
 
+
+    ### drop columns below ###
+    
+    '''
+        ['Street', 
+        'Utilities', 
+        'Condition_2', 
+        'Roof_Matl', 
+        'Heating', 
+        'Pool_QC', 
+        'Misc_Feature', 
+        'Low_Qual_Fin_SF', 
+        'Pool_Area', 
+        'Longitude',
+        'Latitude']
+    '''
+    cols = ['Street', 
+            'Utilities', 
+            'Condition_2', 
+            'Roof_Matl', 
+            'Heating', 
+            'Pool_QC', 
+            'Misc_Feature', 
+            'Low_Qual_Fin_SF', 
+            'Pool_Area', 
+            'Longitude',
+            'Latitude']
+
+    for col in cols:
+        # print(f'col:{col}')
+        clear_data = clear_data.drop(col, axis=1)
+    # print(f'clear_data:{clear_data.shape}')
+    # exit()
+
+
+
+    '''
+        ["Lot_Frontage", 
+        "Lot_Area", 
+        "Mas_Vnr_Area", 
+        "BsmtFin_SF_2", 
+        "Bsmt_Unf_SF", 
+        "Total_Bsmt_SF", 
+        "Second_Flr_SF", 
+        'First_Flr_SF', 
+        "Gr_Liv_Area", 
+        "Garage_Area", 
+        "Wood_Deck_SF", 
+        "Open_Porch_SF", 
+        "Enclosed_Porch", 
+        "Three_season_porch", 
+        "Screen_Porch", 
+        "Misc_Val"]
+
+    '''
     # print(data_df)
     # print('clear data shape:',clear_data.shape)
     # exit()
@@ -203,22 +257,22 @@ def preprocess(df,deleteTag=False,tag="train"):
         For the other numerical data I will also estimate them according to their statistics and for that I will use SimpleImputer object from sklearn library. 
         For columns: BsmtFinSF1, BsmtFinSF2, BsmtUnfSF, BsmtFullBath and BsmtHalfBath , MasVnrArea I will fill Nan values with constant = 0 and for the rest with median.
     '''
-    num_features = clear_data.select_dtypes(include=['int64','float64']).columns
-    num_features_to_constant = ['BsmtFin_SF_1', 'BsmtFin_SF_2', 'Bsmt_Full_Bath', 'Bsmt_Half_Bath', "Mas_Vnr_Area"] 
-    num_features_to_median = [feature for feature in num_features if feature not in num_features_to_constant + ["Sale_Price"]]
+    # num_features = clear_data.select_dtypes(include=['int64','float64']).columns
+    # num_features_to_constant = ['BsmtFin_SF_1', 'BsmtFin_SF_2', 'Bsmt_Full_Bath', 'Bsmt_Half_Bath', "Mas_Vnr_Area"] 
+    # num_features_to_median = [feature for feature in num_features if feature not in num_features_to_constant + ["Sale_Price"]]
 
 
-    clear_data = none_transform(clear_data)
+    # clear_data = none_transform(clear_data)
 
     # print(f'data shape:{clear_data.shape}')
 
 
     # collecting the numeric features without considering SalePrice
-    numeric_features = [feat for feat in num_features if feat not in ['Sale_Price']] 
+    # numeric_features = [feat for feat in num_features if feat not in ['Sale_Price']] 
 
     # selecting columns with skew more than 0.5
-    skewed_features = clear_data[num_features].apply(lambda x: x.dropna().skew())
-    skewed_features = skewed_features[skewed_features > 0.5].index
+    # skewed_features = clear_data[num_features].apply(lambda x: x.dropna().skew())
+    # skewed_features = skewed_features[skewed_features > 0.5].index
     # print("\nHighly skewed features: \n\n{}".format(skewed_features.tolist()))
     '''
         ['Lot_Area', 'Mas_Vnr_Area', 
@@ -235,9 +289,9 @@ def preprocess(df,deleteTag=False,tag="train"):
     
     ### The “optimal lambda” is the one that results in the best approximation of a normal distribution curve. I selected lambda= 0.15.
 
-    lambda_ = 0.15
-    for feature in skewed_features:
-        clear_data[feature] = boxcox1p(clear_data[feature], lambda_)
+    # lambda_ = 0.15
+    # for feature in skewed_features:
+    #     clear_data[feature] = boxcox1p(clear_data[feature], lambda_)
 
     # print(clear_data)
     ### Generating features:
@@ -280,7 +334,7 @@ def preprocess(df,deleteTag=False,tag="train"):
     clear_data['Isfireplace'] = clear_data['Fireplaces'].apply(lambda x: 1 if x > 0 else 0)
 
     # If the house has a pool
-    clear_data['Ispool'] = clear_data['Pool_Area'].apply(lambda x: 1 if x > 0 else 0)
+    # clear_data['Ispool'] = clear_data['Pool_Area'].apply(lambda x: 1 if x > 0 else 0)
 
     # If the house has second floor
     clear_data['Issecondfloor'] = clear_data['Second_Flr_SF'].apply(lambda x: 1 if x > 0 else 0)
