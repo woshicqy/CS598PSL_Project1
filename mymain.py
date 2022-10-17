@@ -16,7 +16,7 @@ from scipy.special import boxcox1p
 import csv
 
 from scipy.stats import norm, skew #for some statistics
-
+import scipy
 
 import matplotlib.pyplot as plt
 
@@ -145,8 +145,26 @@ def preprocess(df,deleteTag=False,tag="train"):
         clear_data = clear_data.drop(col, axis=1)
     # print(f'clear_data:{clear_data.shape}')
     # exit()
-
-
+    win_cols = ["Lot_Frontage", 
+                "Lot_Area", 
+                "Mas_Vnr_Area", 
+                "BsmtFin_SF_2", 
+                "Bsmt_Unf_SF", 
+                "Total_Bsmt_SF", 
+                "Second_Flr_SF", 
+                'First_Flr_SF', 
+                "Gr_Liv_Area", 
+                "Garage_Area", 
+                "Wood_Deck_SF", 
+                "Open_Porch_SF", 
+                "Enclosed_Porch",
+                "Three_season_porch", 
+                "Screen_Porch", 
+                "Misc_Val"]
+    for col in win_cols:
+        clear_data[col] = scipy.stats.mstats.winsorize(clear_data[col],limits=[0.0, 0.05])
+    # print(f'clear_data:{clear_data.shape}')
+    # exit()
 
     '''
         ["Lot_Frontage", 
