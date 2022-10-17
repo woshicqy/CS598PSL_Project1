@@ -83,6 +83,7 @@ def preprocess(df,deleteTag=False,tag="train"):
     data_df = df.drop("PID", axis=1)
 
     # print('data shape:',data_df.shape)
+    # exit()
 
     if tag == 'train':
 
@@ -240,26 +241,26 @@ def preprocess(df,deleteTag=False,tag="train"):
 
     # print(clear_data)
     ### Generating features:
-    # order_feats = ["Exter_Qual", "Exter_Cond", "Heating_QC", "Kitchen_Qual", "Bsmt_Qual", 
-    #                "Bsmt_Cond", "Fireplace_Qu", "Garage_Qual", "Garage_Cond"]
-    # original_features_df = clear_data[order_feats + ['Neighborhood']] # we need to save original values for one-hot encoding
-    # # print(f'original_features_df:{original_features_df}')
-    # # print(f'clear_data:{clear_data}')
+    order_feats = ["Exter_Qual", "Exter_Cond", "Heating_QC", "Kitchen_Qual", "Bsmt_Qual", 
+                   "Bsmt_Cond", "Fireplace_Qu", "Garage_Qual", "Garage_Cond"]
+    original_features_df = clear_data[order_feats + ['Neighborhood']] # we need to save original values for one-hot encoding
+    # print(f'original_features_df:{original_features_df}')
+    # print(f'clear_data:{clear_data}')
 
-    # cat_columns = clear_data.select_dtypes(['object']).columns
+    cat_columns = clear_data.select_dtypes(['object']).columns
 
-    # clear_data[cat_columns] = clear_data[cat_columns].apply(lambda x: pd.factorize(x)[0])
-    print()
-    cols = ('Fireplace_Qu', 'Bsmt_Qual', 'Bsmt_Cond', 'Garage_Qual', 'Garage_Cond', 
-        'Exter_Qual', 'Exter_Cond','Heating_QC', 'Pool_QC', 'Kitchen_Qual', 'BsmtFin_Type_1', 
-        'BsmtFin_Type_2', 'Functional', 'Fence', 'Bsmt_Exposure', 'Garage_Finish', 'Land_Slope',
-        'Lot_Shape', 'Paved_Drive', 'Street', 'Alley', 'Central_Air', 'MS_SubClass', 'Overall_Cond', 
-        'Year_Sold', 'Mo_Sold')
+    clear_data[cat_columns] = clear_data[cat_columns].apply(lambda x: pd.factorize(x)[0])
+    # print()
+    # cols = ('Fireplace_Qu', 'Bsmt_Qual', 'Bsmt_Cond', 'Garage_Qual', 'Garage_Cond', 
+    #     'Exter_Qual', 'Exter_Cond','Heating_QC', 'Pool_QC', 'Kitchen_Qual', 'BsmtFin_Type_1', 
+    #     'BsmtFin_Type_2', 'Functional', 'Fence', 'Bsmt_Exposure', 'Garage_Finish', 'Land_Slope',
+    #     'Lot_Shape', 'Paved_Drive', 'Street', 'Alley', 'Central_Air', 'MS_SubClass', 'Overall_Cond', 
+    #     'Year_Sold', 'Mo_Sold')
     # process columns, apply LabelEncoder to categorical features
-    for c in cols:
-        lbl = LabelEncoder() 
-        lbl.fit(list(clear_data[c].values)) 
-        clear_data[c] = lbl.transform(list(clear_data[c].values))
+    # for c in cols:
+    #     lbl = LabelEncoder() 
+    #     lbl.fit(list(clear_data[c].values)) 
+    #     clear_data[c] = lbl.transform(list(clear_data[c].values))
     # print('Shape all_data: {}'.format(clear_data.shape))
     # exit()
 
@@ -290,11 +291,12 @@ def preprocess(df,deleteTag=False,tag="train"):
     # If the house has Wood Deck
     clear_data['IsWoodDeck'] = clear_data['Wood_Deck_SF'].apply(lambda x: 1 if x > 0 else 0)
 
-    # print(clear_data)
+    print(f'clear_data:{clear_data.shape}')
 
+    # hot_one_features = clear_data
 
-    hot_one_features = pd.get_dummies(clear_data).reset_index(drop=True)
-
+    hot_one_features = pd.get_dummies(clear_data)
+    # print(f'hot_one_features:{hot_one_features}')
     # print('features shape:',hot_one_features.shape)
 
     return hot_one_features,train_y
@@ -330,17 +332,17 @@ if __name__ == '__main__':
     test_data = pd.read_csv('test1.csv')
     test_y = pd.read_csv('test_y1.csv')
     print('Load data is done!')
-    re_train,re_y = preprocess_pipline(train_data,deleteTag = True,tag = "train")
+    # re_train,re_y = preprocess_pipline(train_data,deleteTag = True,tag = "train")
 
-    re_test,_ = preprocess_pipline(train_data,deleteTag = True,tag = "test")
+    # re_test,_ = preprocess_pipline(test_data,deleteTag = True,tag = "test")
 
     re_train_,re_y_ = preprocess_pipline(train_data,deleteTag = False,tag = "train")
 
-    re_test_,_ = preprocess_pipline(train_data,deleteTag = False,tag = "test")
+    re_test_,_ = preprocess_pipline(test_data,deleteTag = False,tag = "test")
 
-    print(f're_train:{re_train.shape}')
-    print(f're_y:{re_y.shape}')
-    print(f're_test:{re_test.shape}')
+    # print(f'train:{re_train.shape}')
+    # print(f'y:{re_y.shape}')
+    # print(f'test:{re_test.shape}')
 
     print(f're_train:{re_train_.shape}')
     print(f're_y:{re_y_.shape}')
