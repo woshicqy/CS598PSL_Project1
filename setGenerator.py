@@ -22,14 +22,9 @@ for i in range(num_sets):
     test_tmp = data_arr[testID_arr[:,i], ]
     test_tmp_y = test_tmp[:,-1]
     test_tmp = test_tmp[:,:-1]
-    # print(f'train_tmp:{test_tmp}')
-
-    # print(f'test_tmp_y:{test_tmp_y.shape}')
-    # print(f'train_tmp:{train_tmp.shape}')
     train_file = 'train' + str(i+1) + '.csv'
     test_file = 'test' + str(i+1) + '.csv'
     test_y_file = 'test_y' + str(i+1) + '.csv'
-    # exit()
     np.savetxt(train_file, train_tmp, delimiter=",",fmt='%s',header=','.join(data_top),comments='')
     np.savetxt(test_file, test_tmp, delimiter=",",fmt='%s',header=','.join(data_top),comments='')
     np.savetxt(test_y_file, test_tmp_y, delimiter=",",header='Sale_Price',comments='')

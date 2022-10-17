@@ -204,18 +204,15 @@ def preprocess_pipline(df,ohe,features_dict,deleteTag=False,tag="train"):
     
         return re_data, None,_,ohe
 
-from google.colab import drive
-drive.mount('/content/drive')
-
 def calculate_RMSE(pre,gc):
   return np.sqrt(np.mean((pre-gc)**2))
 
 from xgboost.sklearn import XGBRegressor
 for i in range(1,11):
   print(f"The {i} time")
-  train_data = pd.read_csv(f'/content/drive/MyDrive/PSL/train/train{i}.csv')
-  test_data = pd.read_csv(f'/content/drive/MyDrive/PSL/test/test{i}.csv')
-  test_y = pd.read_csv(f'/content/drive/MyDrive/PSL/test_y/test_y{i}.csv')
+  train_data = pd.read_csv(f'train{i}.csv')
+  test_data = pd.read_csv(f'test{i}.csv')
+  test_y = pd.read_csv(f'test_y{i}.csv')
 
   features_dict = dict()
   ohe = None

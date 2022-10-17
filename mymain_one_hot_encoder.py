@@ -97,7 +97,7 @@ def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
                 "Misc_Val"]
 
     for col in win_cols:
-        clear_data[col] = scipy.stats.mstats.winsorize(clear_data[col],limits=[0.0, 0.05])
+        clear_data[col] = scipy.stats.mstats.winsorize(clear_data[col],limits=[0, 0.03], inplace=True)
 
 
     train_y = clear_data["Sale_Price"]
