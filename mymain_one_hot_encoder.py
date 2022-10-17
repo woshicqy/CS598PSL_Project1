@@ -188,40 +188,47 @@ def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
     # If the house has Wood Deck
     clear_data['IsWoodDeck'] = clear_data['Wood_Deck_SF'].apply(lambda x: 1 if x > 0 else 0)
 
+    cat_var = []
+    num_var = []
+
+    for var in clear_data.keys().tolist():
+        if clear_data[var].dtype == 'O':
+            cat_var.append(var)
+        else:
+            num_var.append(var)
+
+
     if tag ==  'train':
         features_dict = dict()
         rows,cols = clear_data.shape
-        for c in columns:
-            tmp_feature_info = []
-            ohe = OneHotEncoder(handle_unknown='ignore',sparse=False)
-            clear_data[c] = clear_data[c].astype('object')
-            input_data = np.array(clear_data[c]).reshape(-1,1)
-            ohe.fit(input_data)
-
-            feature_name_cache = list(ohe.get_feature_names_out())
-            tmp_feature_info.append([feature_name_cache])
-            tmp_feature_info.append([ohe])
-
-            features_dict[c] = tmp_feature_info
-            tmp = ohe.transform(input_data)
-            clear_data.drop([c],axis=1, inplace=True)
-            clear_data = pd.concat([clear_data,pd.DataFrame(tmp, columns=ohe.get_feature_names_out())],axis=1)
-        hot_one_features = clear_data
+        # for c in columns:
+        c = columns
+        tmp_feature_info = []
+        ohe = OneHotEncoder(handle_unknown='ignore',sparse=False)
+        ohe.fit(clear_data[cat_var])
+        enc = ohe.transform(clear_data[cat_var])
+        featuresInfoCache = []
+        featuresInfoCache.append([ohe.get_feature_names_out()])
+        featuresInfoCache.append([ohe])
+        featuresInfoCache.append([cat_var])
+        featuresInfoCache.append([num_var])
+        features_dict['features'] = featuresInfoCache
+        clear_dummy = pd.DataFrame(enc, columns=ohe.get_feature_names_out())
+        hot_one_features = pd.concat([clear_dummy,clear_data[num_var]], axis = 1)
     else:
         rows,cols = clear_data.shape
-        for c in columns:
-            all_featues =  np.array([])
-            featureInfocache = features_dict[c]
-            list_categories = np.array(features_dict[c][0][0]).reshape(-1,1)
-            ohe = features_dict[c][1][0]
-            clear_data[c] = clear_data[c].astype('object')
-            input_data = np.array(clear_data[c]).reshape(-1,1)
-            clear_data.drop([c],axis=1, inplace=True)
-            tmp = ohe.transform(input_data)
-            clear_data = pd.concat([clear_data,pd.DataFrame(tmp, columns=list_categories)],axis=1)
-        for c in num_columns:
-            input_data = np.array(clear_data[c]).reshape(-1,1)
-        hot_one_features = clear_data
+        ### 'features' ###
+        c = columns
+        featureInfocache = features_dict['features']
+        list_categories = np.array(featureInfocache[0][0]).reshape(-1,1)
+        ohe = featureInfocache[1][0]
+        cat_var = featureInfocache[2][0]
+        num_var = featureInfocache[3][0]
+
+        enc = ohe.transform(clear_data[cat_var])
+        clear_dummy = pd.DataFrame(enc, columns=ohe.get_feature_names_out())
+        hot_one_features = pd.concat([clear_dummy,clear_data[num_var]], axis = 1)
+
     return hot_one_features,train_y,features_dict,ohe
     
 
@@ -246,19 +253,11 @@ if __name__ == '__main__':
     test_data = pd.read_csv('test1.csv')
     test_y = pd.read_csv('test_y1.csv')
     print('Load data is done!')
-    # re_train,re_y = preprocess_pipline(train_data,deleteTag = True,tag = "train")
-
-    # re_test,_ = preprocess_pipline(test_data,deleteTag = True,tag = "test")
     features_dict = dict()
     ohe = None
     re_train_,re_y_,features_dict,ohe = preprocess_pipline(train_data,ohe,features_dict,deleteTag = False,tag = "train")
     # print(features_dict['MS_SubClass'])
     re_test_,_,_,ohe = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag = "test")
-
-    # print(f'train:{re_train.shape}')
-    # print(f'y:{re_y.shape}')
-    # print(f'test:{re_test.shape}')
-
     print(f're_train:{re_train_.shape}')
     print(f're_y:{re_y_.shape}')
     print(f're_test:{re_test_.shape}')
