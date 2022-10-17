@@ -162,9 +162,32 @@ def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
 
     cat_columns = clear_data.select_dtypes(['object']).columns
 
-    # clear_data[cat_columns] = clear_data[cat_columns].apply(lambda x: pd.factorize(x)[0])
-    # print('columns:',len(columns))
-    # exit()
+    ### Feature Engineering ###
+    # Total Squere Feet for house
+    clear_data["TotalSqrtFeet"] = clear_data["Gr_Liv_Area"] + clear_data["Total_Bsmt_SF"]
+
+    # Total number of bathrooms
+    clear_data["TotalBaths"] = clear_data["Bsmt_Full_Bath"] + (clear_data["Bsmt_Half_Bath"]  * .5) + clear_data["Full_Bath"] + (clear_data["Half_Bath"]* .5)
+
+
+    # If the house has a garage
+    clear_data['Isgarage'] = clear_data['Garage_Area'].apply(lambda x: 1 if x > 0 else 0)
+
+    # If the house has a fireplace
+    clear_data['Isfireplace'] = clear_data['Fireplaces'].apply(lambda x: 1 if x > 0 else 0)
+
+    # If the house has a pool
+    # clear_data['Ispool'] = clear_data['Pool_Area'].apply(lambda x: 1 if x > 0 else 0)
+
+    # If the house has second floor
+    clear_data['Issecondfloor'] = clear_data['Second_Flr_SF'].apply(lambda x: 1 if x > 0 else 0)
+
+    # If the house has Open Porch
+    clear_data['IsOpenPorch'] = clear_data['Open_Porch_SF'].apply(lambda x: 1 if x > 0 else 0)
+
+    # If the house has Wood Deck
+    clear_data['IsWoodDeck'] = clear_data['Wood_Deck_SF'].apply(lambda x: 1 if x > 0 else 0)
+
     if tag ==  'train':
         features_dict = dict()
         rows,cols = clear_data.shape
