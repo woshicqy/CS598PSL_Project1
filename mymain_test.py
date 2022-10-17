@@ -168,13 +168,6 @@ def preprocess(df,deleteTag=False,tag="train"):
 
     clear_data["Garage_Yr_Blt"] = clear_data.groupby('Neighborhood')["Garage_Yr_Blt"].transform(lambda x: x.fillna(x.median()))
 
-    # all_data_na = (clear_data.isnull().sum() / len(clear_data)) * 100
-    # all_data_na = all_data_na.drop(all_data_na[all_data_na == 0].index).sort_values(ascending=False)[:30]
-    # missing_data = pd.DataFrame({'Missing Ratio' :all_data_na})
-    # print(missing_data.head(20))
-    # print(f'clear_data shape:{clear_data.shape}')
-    # exit()
-
     # enc = OneHotEncoder(handle_unknown='ignore')
     # clear_data = enc.fit_transform(clear_data)
 
@@ -186,26 +179,52 @@ def preprocess(df,deleteTag=False,tag="train"):
     columns = clear_data.select_dtypes(include='object').columns.array
     num_columns = clear_data.select_dtypes(include='number').columns.array
     for col in columns:
+
         clear_data[col] = clear_data[col].astype("category")
+    # print(columns)
+    # cache  = clear_data['Overall_Cond'].unique()
+    # print('\n')
+    # print('col &unique:',cache)
+    # exit()
+
+    # pd.to_numeric(clear_data['Lot_Shape'].replace({'Irregular':1,'Moderately_Irregular':2,'Slightly_Irregular':3,'Regular':4}, inplace=True))
+    # pd.to_numeric(clear_data['Land_Slope'].replace({'Gentle_slope':3,'Moderate Slope':2,'Severe Slope':3}, inplace=True))
+    # pd.to_numeric(clear_data['Overall_Cond'].replace({'Very_Excellent':10,'Excellent':9,'Very_Good':8}, inplace=True))
+    # exit()
+    # for col in columns:
+    #     cache  = clear_data[col].unique()
+    #     print('\n')
+    #     print('col &unique:',col)
+    #     print('col &unique:',cache)
+    # exit()
+
+    # print(clear_data['Heating_QC'].head(5))
+    # print(clear_data['Central_Air'].head(5))
     # print(f'columns:{columns}')
     # print(f'num_columns:{num_columns}')
     # print(f'clear data shape:{clear_data}')
+    # exit()
     # print('clear_data:',clear_data['Exter_Qual'])
-    # enc = OneHotEncoder(handle_unknown='ignore')
+    
     for c in columns: 
-        lbl = LabelEncoder() 
-        lbl.fit(list(clear_data[c].values)) 
-        clear_data[c] = lbl.transform(list(clear_data[c].values))
+        enc = OneHotEncoder(handle_unknown='ignore',sparse=False)
+        # lbl = LabelEncoder()
+        # lbl.fit(list(clear_data[c].values)) 
+        # clear_data[c] = lbl.transform(list(clear_data[c].values))
+        clear_data[c] = enc.fit_transform(np.array(clear_data[c]).reshape(-1,1))
+
+    # pd.to_numeric(scaled_X_test['Pool_QC'].replace({'Excellent':5,'Good':4,'Typical':3,'Fair':2,'Poor':1,'No_Pool':0}, inplace=True))
+
 
     
 
     hot_one_features = pd.get_dummies(clear_data)
     # print(f'clear data shape:{clear_data.shape}')
     # print(f'clear data shape:{clear_data}')
-    # exit()
+    
     # print(f'hot_one_features:{hot_one_features}')
-    # print('hot_one_features:',hot_one_features['Exter_Qual'])
     # print('features shape:',hot_one_features.shape)
+    # exit()
 
     return hot_one_features,train_y
     
