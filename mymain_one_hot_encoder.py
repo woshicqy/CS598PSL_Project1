@@ -24,61 +24,6 @@ import matplotlib.pyplot as plt
 
 import seaborn as sns
 
-
-def remove_outliers(dataset, threshold, columns=None, removed = False):
-    if columns==None:
-        numerics = ['int64','float64']
-        columns = dataset.select_dtypes(include=numerics).columns
-    
-    tmp = dataset.copy()
-    z = np.abs(stats.zscore(tmp[columns]))
-    outliers = [row.any() for row in (z > threshold)]  
-    outliers_idxs = tmp.index[outliers].tolist()
-    print("Number of removed rows = {}".format(len(outliers_idxs)))
-    if removed: return dataset.drop(outliers_idxs), tmp.loc[outliers]
-    else: return dataset.drop(outliers_idxs)
-
-
-def convert_to_string(df, columns):
-    df[columns] = df[columns].astype(str)
-    return df
-
-
-def none_transform(df):
-    ''' Function that converts missing categorical values 
-    into specific strings according to "conversion_list" 
-    
-    Returns the dataframe after transformation.
-    '''
-    conversion_list = [("Mas_Vnr_Type","None"),
-                  ("Bsmt_Qual","NA"), 
-                  ("Electrical", "SBrkr"),
-                  ("Bsmt_Cond","TA"),
-                  ("Bsmt_Exposure","No"),
-                  ("BsmtFin_Type_1","No"),
-                  ("BsmtFin_Type_2","No"),
-                  ("Central_Air","N"),
-                  ("Condition_1","Norm"), 
-                  ("Condition_2","Norm"),
-                  ("Exter_Cond","TA"),
-                  ("Exter_Qual","TA"), 
-                  ("Fireplace_Qu","NA"),
-                  ("Functional","Typ"), 
-                  ("Garage_Type","No"), 
-                  ("Garage_Finish","No"), 
-                  ("Garage_Qual","No"), 
-                  ("Garage_Cond","No"), 
-                  ("Heating_QC","TA"), 
-                  ("Kitchen_Qual","TA"),
-                  ("MS_Zoning", "None"),
-                  ("Exterior_1st", "VinylSd"), 
-                  ("Exterior_2nd", "VinylSd"), 
-                  ("Sale_Type", "WD")]
-    for col, new_str in conversion_list:
-        df.loc[:, col] = df.loc[:, col].fillna(new_str)
-    return df
-
-
 def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
 
     # data_df = df.drop(["Street", "Utilities"], axis=1)
@@ -129,6 +74,10 @@ def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
             'Pool_Area', 
             'Longitude',
             'Latitude']
+
+    for col in cols:
+        # print(f'col:{col}')
+        clear_data = clear_data.drop(col, axis=1)
 
     win_cols = ["Lot_Frontage", 
                 "Lot_Area", 
