@@ -18,8 +18,12 @@ print(f'testID:{testID_arr[:].shape}')
 
 
 for i in range(num_sets):
-    train_tmp = data_arr[-testID_arr[:,i], :]
-    test_tmp = data_arr[testID_arr[:,i], ]
+    index = testID_arr[:,i]-1
+    train_tmp = data_arr[-index, :]
+    # print('train_tmp:',testID_arr[:,i])
+    # print('train_tmp:',testID_arr[:,i]-1)
+    # exit()
+    test_tmp = data_arr[index, ]
     test_tmp_y = test_tmp[:,-1]
     test_tmp = test_tmp[:,:-1]
     train_file = 'train' + str(i+1) + '.csv'
