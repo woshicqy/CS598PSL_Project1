@@ -16,7 +16,8 @@ from scipy import stats
 from sklearn.linear_model import LinearRegression
 from scipy.special import boxcox1p
 import csv
-
+import warnings
+warnings.filterwarnings("ignore")
 from scipy.stats import norm, skew #for some statistics
 import scipy
 
@@ -24,6 +25,7 @@ import matplotlib.pyplot as plt
 
 import seaborn as sns
 
+### Define preprocessing ###
 def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
 
     # data_df = df.drop(["Street", "Utilities"], axis=1)
@@ -36,6 +38,7 @@ def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
     else:
         train_y = None
 
+    ### don't need this time ###
     if deleteTag:
         # print('Will Delete Rows')
         clear_data = data_df.drop(data_df[(data_df['Gr_Liv_Area']>4000) & (data_df['Sale_Price']<300000)].index)
@@ -87,7 +90,6 @@ def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
 
     clear_data["Garage_Yr_Blt"] = clear_data.groupby('Neighborhood')["Garage_Yr_Blt"].transform(lambda x: x.fillna(x.median()))
 
-    # hot_one_features = clear_data
     columns = clear_data.select_dtypes(include='object').columns.array
     num_columns = clear_data.select_dtypes(include='number').columns.array
 
@@ -132,7 +134,6 @@ def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
     if tag ==  'train':
         features_dict = dict()
         rows,cols = clear_data.shape
-        # for c in columns:
         c = columns
         tmp_feature_info = []
         ohe = OneHotEncoder(handle_unknown='ignore',sparse=False)
@@ -162,33 +163,71 @@ def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
 
     return hot_one_features,train_y,features_dict,ohe,pid
     
-
+### To better debug but still keep it ###
 def preprocess_pipline(df,ohe,features_dict,deleteTag=False,tag="train"):
     if tag == "train":
         data_df = df
-
         re_data,train_y,features_dict,ohe,pid = preprocess(data_df,ohe,features_dict,deleteTag,tag)
-
-
-
         return re_data, train_y,features_dict,ohe,pid
     else:
         re_data,train_y,_,ohe,pid = preprocess(df,ohe,features_dict,deleteTag,tag)
-    
         return re_data, None,_,ohe,pid
+
+### Define our regression model ###
+def regression(train_file,test_file):
+    print('Regression work starts!')
+    train_data = pd.read_csv(train_file)
+    test_data = pd.read_csv(test_file)
+    print('Data loaded!')
+
+    features_dict = dict()
+    ohe = None
+    x_train, y_train,features_dict,ohe,pid = preprocess_pipline(train_data,ohe,features_dict,deleteTag = False,tag="train")
+    x_test, placeholder,_,_,pid = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag="test")
+    y_train_log = np.log(y_train)
+
+    from sklearn.linear_model import ElasticNet
+    reg = ElasticNet(l1_ratio=0.0,alpha = 0.0025,random_state=4777).fit(x_train, y_train_log)
+    reg.fit(x_train, y_train_log)
+    y_pred_log = reg.predict(x_test)
+    y_pred_log = pd.DataFrame(y_pred_log, columns=['Sale_Price'])
+    y_pred = np.exp(y_pred_log)
+    y_pred = np.round(y_pred,1)
+    res = pd.concat([pid,y_pred], axis = 1)
+    res.to_csv("mysubmission1.txt",index=None, sep=',', mode='w')
+    print('mysubmission1.txt saving is done!')
+
+def calculate_RMSE(pre,gc):
+  return np.sqrt(np.mean((pre-gc)**2))
+
+### Define our tree model ###
+def tree_model(train_file,test_file):
+    from xgboost.sklearn import XGBRegressor
+    print('Tree model work starts!')
+    train_data = pd.read_csv(train_file)
+    test_data = pd.read_csv(test_file)
+    print('Data loaded!')
+    features_dict = dict()
+    ohe = None
+
+    re_train_,re_y_,features_dict,ohe,pid = preprocess_pipline(train_data,ohe,features_dict,deleteTag = False,tag = "train")
+
+    re_test_,_,_,ohe,pid = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag = "test")
+    xgb_model = XGBRegressor( 
+                                learning_rate=0.05, max_depth=6, n_estimators=1500,
+                                subsample=0.7, silent=1,reg_alpha=0.001,colsample_bytree=0.6,random_state=4777)
+    xgb_model.fit(re_train_,np.log(re_y_))
+    predicted_value = xgb_model.predict(re_test_)
+    predicted_value = np.exp(predicted_value)
+    predicted_value = np.round(predicted_value,1)
+    pid = pd.DataFrame(pid)
+    pid["Sale_Price"] = predicted_value
+    pid.to_csv('mysubmission2.txt',index=None, sep=',', mode='w')
+    print('mysubmission2.txt saving is done!')
         
 
 if __name__ == '__main__':
-
-    train_data = pd.read_csv('train1.csv')
-    test_data = pd.read_csv('test1.csv')
-    test_y = pd.read_csv('test_y1.csv')
-    print('Load data is done!')
-    features_dict = dict()
-    ohe = None
-    re_train_,re_y_,features_dict,ohe,pid = preprocess_pipline(train_data,ohe,features_dict,deleteTag = False,tag = "train")
-    # print(features_dict['MS_SubClass'])
-    re_test_,_,_,ohe,pid = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag = "test")
-    print(f're_train:{re_train_.shape}')
-    print(f're_y:{re_y_.shape}')
-    print(f're_test:{re_test_.shape}')
+    train_file = 'train1.csv'
+    test_file = 'test1.csv'
+    regression(train_file,test_file)
+    tree_model(train_file,test_file)
