@@ -33,13 +33,13 @@ import matplotlib.pyplot as plt
 
 import seaborn as sns
 
+from xgboost.sklearn import XGBRegressor
+
 def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
 
     # data_df = df.drop(["Street", "Utilities"], axis=1)
+    pid = df["PID"]
     data_df = df.drop("PID", axis=1)
-
-    # print('data shape:',data_df.shape)
-    # exit()
 
     if tag == 'train':
 
@@ -47,8 +47,6 @@ def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
     else:
         train_y = None
 
-
-    
     if deleteTag:
         # print('Will Delete Rows')
         clear_data = data_df.drop(data_df[(data_df['Gr_Liv_Area']>4000) & (data_df['Sale_Price']<300000)].index)
@@ -58,20 +56,6 @@ def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
 
 
     ### drop columns below ###
-    
-    '''
-        ['Street', 
-        'Utilities', 
-        'Condition_2', 
-        'Roof_Matl', 
-        'Heating', 
-        'Pool_QC', 
-        'Misc_Feature', 
-        'Low_Qual_Fin_SF', 
-        'Pool_Area', 
-        'Longitude',
-        'Latitude']
-    '''
     cols = ['Street', 
             'Utilities', 
             'Condition_2', 
@@ -106,7 +90,7 @@ def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
                 "Misc_Val"]
 
     for col in win_cols:
-        clear_data[col] = scipy.stats.mstats.winsorize(clear_data[col],limits=[0.0, 0.05])
+        clear_data[col] = scipy.stats.mstats.winsorize(clear_data[col],limits=[0, 0.03], inplace=True)
 
 
     train_y = clear_data["Sale_Price"]
@@ -187,45 +171,47 @@ def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
         clear_dummy = pd.DataFrame(enc, columns=ohe.get_feature_names_out())
         hot_one_features = pd.concat([clear_dummy,clear_data[num_var]], axis = 1)
 
-    return hot_one_features,train_y,features_dict,ohe
+    return hot_one_features,train_y,features_dict,ohe,pid
     
 
 def preprocess_pipline(df,ohe,features_dict,deleteTag=False,tag="train"):
     if tag == "train":
         data_df = df
 
-        re_data,train_y,features_dict,ohe = preprocess(data_df,ohe,features_dict,deleteTag,tag)
+        re_data,train_y,features_dict,ohe,pid = preprocess(data_df,ohe,features_dict,deleteTag,tag)
 
 
 
-        return re_data, train_y,features_dict,ohe
+        return re_data, train_y,features_dict,ohe,pid
     else:
-        re_data,train_y,_,ohe = preprocess(df,ohe,features_dict,deleteTag,tag)
+        re_data,train_y,_,ohe,pid = preprocess(df,ohe,features_dict,deleteTag,tag)
     
-        return re_data, None,_,ohe
+        return re_data, None,_,ohe,pid
 
-def calculate_RMSE(pre,gc):
-  return np.sqrt(np.mean((pre-gc)**2))
+def calculate_RMSE(predicted_value,true_value):
+  return np.sqrt(np.mean((predicted_value-true_value)**2))
 
-from xgboost.sklearn import XGBRegressor
-for i in range(1,11):
-  print(f"The {i} time")
-  train_data = pd.read_csv(f'train{i}.csv')
-  test_data = pd.read_csv(f'test{i}.csv')
-  test_y = pd.read_csv(f'test_y{i}.csv')
+if __name__ == '__main__':
 
-  features_dict = dict()
-  ohe = None
-
-  re_train_,re_y_,features_dict,ohe = preprocess_pipline(train_data,ohe,features_dict,deleteTag = False,tag = "train")
-
-  re_test_,_,_,ohe = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag = "test")
-  xgb_model = XGBRegressor( 
-                             learning_rate=0.05, max_depth=6, n_estimators=1500,
-                             subsample=0.7, silent=1,reg_alpha=0.001,colsample_bytree=0.6,random_state=4777)
-  xgb_model.fit(re_train_,np.log(re_y_))
-  predict = xgb_model.predict(re_test_)
-  gc = np.log(test_y).values
-  gc = gc.squeeze()
-  print(calculate_RMSE(predict,gc))
+    train_data = pd.read_csv('train.csv')
+    test_data = pd.read_csv('test.csv')
+    print('Load data is done!')
+    features_dict = dict()
+    ohe = None
+    re_train_,re_y_,features_dict,ohe,pid = preprocess_pipline(train_data,ohe,features_dict,deleteTag = False,tag = "train")
+    # print(features_dict['MS_SubClass'])
+    re_test_,_,_,ohe,pid = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag = "test")
+    print(f're_train:{re_train_.shape}')
+    print(f're_y:{re_y_.shape}')
+    print(f're_test:{re_test_.shape}')
+    # print(features_dict['MS_SubClass'])
+    xgb_model = XGBRegressor(learning_rate=0.05, max_depth=6, n_estimators=1500,
+                             subsample=0.7, silent=1,reg_alpha=0.001,
+                             colsample_bytree=0.6,random_state=4777)
+    xgb_model.fit(re_train_,np.log(re_y_))
+    predicted_value = xgb_model.predict(re_test_)
+    predicted_value = np.exp(predicted_value)
+    pid = pd.DataFrame(pid)
+    pid["Sale_Price"] = predicted_value
+    pid.to_csv('mysubmission2.txt',index=None, sep=',', mode='w')
 
