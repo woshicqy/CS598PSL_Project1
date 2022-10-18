@@ -210,8 +210,8 @@ def tree_model(train_file):
     return xgb_model
 
 if __name__ == '__main__':
-    train_file = 'train1.csv'
-    test_file = 'test1.csv'
+    train_file = 'train.csv'
+    test_file = 'test.csv'
 
     ### Step 1: Load train Data ###
     train_data = pd.read_csv(train_file)
