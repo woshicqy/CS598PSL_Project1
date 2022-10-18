@@ -192,26 +192,40 @@ def calculate_RMSE(predicted_value,true_value):
   return np.sqrt(np.mean((predicted_value-true_value)**2))
 
 if __name__ == '__main__':
+    for i in range(10):
+        import time
+        start = time.time()
+        train_data = pd.read_csv("train"+str(i+1)+".csv")
+        test_data = pd.read_csv("test"+str(i+1)+".csv")
+        y_test = pd.read_csv("test_y"+str(i+1)+".csv")
+        # train_data = pd.read_csv('train.csv')
+        # test_data = pd.read_csv('test.csv')
+        print('Load data is done!')
+        features_dict = dict()
+        ohe = None
+        re_train_,re_y_,features_dict,ohe,pid = preprocess_pipline(train_data,ohe,features_dict,deleteTag = False,tag = "train")
+        # print(features_dict['MS_SubClass'])
+        re_test_,_,_,ohe,pid = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag = "test")
+        print(f're_train:{re_train_.shape}')
+        print(f're_y:{re_y_.shape}')
+        print(f're_test:{re_test_.shape}')
+        # print(features_dict['MS_SubClass'])
+        xgb_model = XGBRegressor(learning_rate=0.05, max_depth=6, n_estimators=1500,
+                                subsample=0.7, silent=1,reg_alpha=0.001,
+                                colsample_bytree=0.6,random_state=4777)
+        xgb_model.fit(re_train_,np.log(re_y_))
+        predicted_value = xgb_model.predict(re_test_)
+        gc = np.log(y_test).values
+        gc = gc.squeeze()
 
-    train_data = pd.read_csv('train.csv')
-    test_data = pd.read_csv('test.csv')
-    print('Load data is done!')
-    features_dict = dict()
-    ohe = None
-    re_train_,re_y_,features_dict,ohe,pid = preprocess_pipline(train_data,ohe,features_dict,deleteTag = False,tag = "train")
-    # print(features_dict['MS_SubClass'])
-    re_test_,_,_,ohe,pid = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag = "test")
-    print(f're_train:{re_train_.shape}')
-    print(f're_y:{re_y_.shape}')
-    print(f're_test:{re_test_.shape}')
-    # print(features_dict['MS_SubClass'])
-    xgb_model = XGBRegressor(learning_rate=0.05, max_depth=6, n_estimators=1500,
-                             subsample=0.7, silent=1,reg_alpha=0.001,
-                             colsample_bytree=0.6,random_state=4777)
-    xgb_model.fit(re_train_,np.log(re_y_))
-    predicted_value = xgb_model.predict(re_test_)
-    predicted_value = np.exp(predicted_value)
-    pid = pd.DataFrame(pid)
-    pid["Sale_Price"] = predicted_value
-    pid.to_csv('mysubmission2.txt',index=None, sep=',', mode='w')
+        # predicted_value = np.exp(predicted_value)
+        # pid = pd.DataFrame(pid)
+        # pid["Sale_Price"] = predicted_value
+        # pid.to_csv('mysubmission2.txt',index=None, sep=',', mode='w')
+        # y_pred_log = pd.DataFrame(predicted_value, columns=['Sale_Price'])
+        # print(y_pred_log.shape)
+        end = time.time()
+        print("The time of execution of above program is :",(end-start) * 10**3, "ms")
+        rmse = calculate_RMSE(predicted_value,gc)
+        print('rmse:',rmse)
 
