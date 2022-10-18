@@ -27,6 +27,7 @@ import seaborn as sns
 def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
 
     # data_df = df.drop(["Street", "Utilities"], axis=1)
+    pid = df["PID"]
     data_df = df.drop("PID", axis=1)
 
     if tag == 'train':
@@ -159,22 +160,22 @@ def preprocess(df,ohe,features_dict,deleteTag=False,tag="train"):
         clear_dummy = pd.DataFrame(enc, columns=ohe.get_feature_names_out())
         hot_one_features = pd.concat([clear_dummy,clear_data[num_var]], axis = 1)
 
-    return hot_one_features,train_y,features_dict,ohe
+    return hot_one_features,train_y,features_dict,ohe,pid
     
 
 def preprocess_pipline(df,ohe,features_dict,deleteTag=False,tag="train"):
     if tag == "train":
         data_df = df
 
-        re_data,train_y,features_dict,ohe = preprocess(data_df,ohe,features_dict,deleteTag,tag)
+        re_data,train_y,features_dict,ohe,pid = preprocess(data_df,ohe,features_dict,deleteTag,tag)
 
 
 
-        return re_data, train_y,features_dict,ohe
+        return re_data, train_y,features_dict,ohe,pid
     else:
-        re_data,train_y,_,ohe = preprocess(df,ohe,features_dict,deleteTag,tag)
+        re_data,train_y,_,ohe,pid = preprocess(df,ohe,features_dict,deleteTag,tag)
     
-        return re_data, None,_,ohe
+        return re_data, None,_,ohe,pid
         
 
 if __name__ == '__main__':
@@ -185,9 +186,9 @@ if __name__ == '__main__':
     print('Load data is done!')
     features_dict = dict()
     ohe = None
-    re_train_,re_y_,features_dict,ohe = preprocess_pipline(train_data,ohe,features_dict,deleteTag = False,tag = "train")
+    re_train_,re_y_,features_dict,ohe,pid = preprocess_pipline(train_data,ohe,features_dict,deleteTag = False,tag = "train")
     # print(features_dict['MS_SubClass'])
-    re_test_,_,_,ohe = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag = "test")
+    re_test_,_,_,ohe,pid = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag = "test")
     print(f're_train:{re_train_.shape}')
     print(f're_y:{re_y_.shape}')
     print(f're_test:{re_test_.shape}')
