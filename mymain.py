@@ -174,59 +174,78 @@ def preprocess_pipline(df,ohe,features_dict,deleteTag=False,tag="train"):
         return re_data, None,_,ohe,pid
 
 ### Define our regression model ###
-def regression(train_file,test_file):
+def regression(train_file):
     print('Regression work starts!')
     train_data = pd.read_csv(train_file)
-    test_data = pd.read_csv(test_file)
     print('Data loaded!')
 
     features_dict = dict()
     ohe = None
     x_train, y_train,features_dict,ohe,pid = preprocess_pipline(train_data,ohe,features_dict,deleteTag = False,tag="train")
-    x_test, placeholder,_,_,pid = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag="test")
     y_train_log = np.log(y_train)
 
     from sklearn.linear_model import ElasticNet
     reg = ElasticNet(l1_ratio=0.0,alpha = 0.0025,random_state=4777).fit(x_train, y_train_log)
     reg.fit(x_train, y_train_log)
-    y_pred_log = reg.predict(x_test)
-    y_pred_log = pd.DataFrame(y_pred_log, columns=['Sale_Price'])
-    y_pred = np.exp(y_pred_log)
-    y_pred = np.round(y_pred,1)
-    res = pd.concat([pid,y_pred], axis = 1)
-    res.to_csv("mysubmission1.txt",index=None, sep=',', mode='w')
-    print('mysubmission1.txt saving is done!')
+    return reg
 
 def calculate_RMSE(pre,gc):
   return np.sqrt(np.mean((pre-gc)**2))
 
 ### Define our tree model ###
-def tree_model(train_file,test_file):
+def tree_model(train_file):
     from xgboost.sklearn import XGBRegressor
     print('Tree model work starts!')
     train_data = pd.read_csv(train_file)
-    test_data = pd.read_csv(test_file)
     print('Data loaded!')
     features_dict = dict()
     ohe = None
 
     re_train_,re_y_,features_dict,ohe,pid = preprocess_pipline(train_data,ohe,features_dict,deleteTag = False,tag = "train")
 
-    re_test_,_,_,ohe,pid = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag = "test")
     xgb_model = XGBRegressor( 
                                 learning_rate=0.05, max_depth=6, n_estimators=1500,
                                 subsample=0.7, silent=1,reg_alpha=0.001,colsample_bytree=0.6,random_state=4777)
     xgb_model.fit(re_train_,np.log(re_y_))
-    predicted_value = xgb_model.predict(re_test_)
+    return xgb_model
+
+if __name__ == '__main__':
+    train_file = 'train1.csv'
+    test_file = 'test1.csv'
+
+    ### Step 1: Load train Data ###
+    train_data = pd.read_csv(train_file)
+    features_dict = dict()
+    ohe = None
+    ### Step 2: Preproceesing train Data ###
+    x_train, y_train,features_dict,ohe,pid = preprocess_pipline(train_data,ohe,features_dict,deleteTag = False,tag="train")
+    ### Step 3: Get 2 models ###
+    rg_clf = regression(train_file)
+    xgb_clf = tree_model(train_file)
+
+    ### Step 4: Load test Data  ###
+    test_data = pd.read_csv(test_file)
+
+    ### Step 5: Preprocessing test Data ###
+    re_test_,_,_,ohe,pid = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag = "test")
+
+    ### Step 6: Using regression to get predictions ###
+    y_pred_log = rg_clf.predict(re_test_)
+    y_pred_log = pd.DataFrame(y_pred_log, columns=['Sale_Price'])
+    y_pred = np.exp(y_pred_log)
+    y_pred = np.round(y_pred,1)
+    res = pd.concat([pid,y_pred], axis = 1)
+    ### Step 7: Saving mysubmission1.txt file ###
+    res.to_csv("mysubmission1.txt",index=None, sep=',', mode='w')
+    print('mysubmission1.txt saving is done!')
+
+    ### Step 8: Using xgboost to get predictions ###
+    predicted_value = xgb_clf.predict(re_test_)
     predicted_value = np.exp(predicted_value)
     predicted_value = np.round(predicted_value,1)
     pid = pd.DataFrame(pid)
     pid["Sale_Price"] = predicted_value
+
+    ### Step 9: Saving mysubmission2.txt file ###
     pid.to_csv('mysubmission2.txt',index=None, sep=',', mode='w')
     print('mysubmission2.txt saving is done!')
-
-if __name__ == '__main__':
-    train_file = 'train.csv'
-    test_file = 'test.csv'
-    regression(train_file,test_file)
-    tree_model(train_file,test_file)
