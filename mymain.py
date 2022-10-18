@@ -226,7 +226,7 @@ def tree_model(train_file,test_file):
     print('mysubmission2.txt saving is done!')
 
 if __name__ == '__main__':
-    train_file = 'train.csv'
-    test_file = 'test.csv'
+    train_file = 'train1.csv'
+    test_file = 'test1.csv'
     regression(train_file,test_file)
     tree_model(train_file,test_file)
