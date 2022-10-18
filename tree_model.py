@@ -222,7 +222,7 @@ for i in range(1,11):
   re_test_,_,_,ohe = preprocess_pipline(test_data,ohe,features_dict,deleteTag = False,tag = "test")
   xgb_model = XGBRegressor( 
                              learning_rate=0.05, max_depth=6, n_estimators=1500,
-                             subsample=0.7, silent=1,reg_alpha=0.001,colsample_bytree=0.6)
+                             subsample=0.7, silent=1,reg_alpha=0.001,colsample_bytree=0.6,random_state=4777)
   xgb_model.fit(re_train_,np.log(re_y_))
   predict = xgb_model.predict(re_test_)
   gc = np.log(test_y).values
