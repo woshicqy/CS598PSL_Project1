@@ -1,6 +1,3 @@
-from turtle import clear
-from typing import DefaultDict
-from pip import main
 import numpy as np
 import pandas as pd
 import sklearn
@@ -15,14 +12,11 @@ from sklearn.model_selection import cross_val_score,train_test_split
 from scipy import stats
 from sklearn.linear_model import LinearRegression
 from scipy.special import boxcox1p
-import csv
 import warnings
 warnings.filterwarnings("ignore")
 from scipy.stats import norm, skew #for some statistics
 import scipy
-
 import matplotlib.pyplot as plt
-
 import seaborn as sns
 
 ### Define preprocessing ###
